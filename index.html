@@ -14,15 +14,13 @@
         } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
         // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBvqGccwG3RIagj2dgLYod3UYnchOh9KVU",
-            authDomain: "certificate-generator-b3462.firebaseapp.com",
-            projectId: "certificate-generator-b3462",
-            storageBucket: "certificate-generator-b3462.firebasestorage.app",
-            messagingSenderId: "1051096816147",
-            appId: "1:1051096816147:web:43acdb00f6f25902c9fde6",
-            measurementId: "G-H9LS8TNJ6J"
-        };
+        fetch('https://certificategeneratorserver.onrender.com/firebase-config')
+      .then(response => response.json())
+      .then(data => {
+        // Decrypt the base64 encoded config
+        const config = JSON.parse(atob(data.data));
+        // Initialize Firebase with the decrypted config
+
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
@@ -43,7 +41,7 @@
                 profileEmail.textContent = user.email;
             } else {
                 // No user is signed in, redirect to login page
-                window.location.href = 'login.html';
+                window.location.href = 'https://certificategeneratorfrontend.onrender.com/login.html';
             }
         });
 
