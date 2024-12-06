@@ -18,7 +18,7 @@
       .then(response => response.json())
       .then(data => {
         // Decrypt the base64 encoded config
-        const config = JSON.parse(atob(data.data));
+        const firebaseConfig = JSON.parse(atob(data.data));
         // Initialize Firebase with the decrypted config
 
 
