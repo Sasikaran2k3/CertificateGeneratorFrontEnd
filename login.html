@@ -146,7 +146,7 @@
     // Fetch Firebase config dynamically from the server
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js';
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js';
-    fetch('http://localhost:3000/firebase-config')
+    fetch('https://certificategeneratorserver.onrender.com/firebase-config')
       .then(response => response.json())
       .then(data => {
         // Decrypt the base64 encoded config
