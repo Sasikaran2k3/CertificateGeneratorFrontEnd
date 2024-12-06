@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Generator</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvqGccwG3RIagj2dgLYod3UYnchOh9KVU",
+            authDomain: "certificate-generator-b3462.firebaseapp.com",
+            projectId: "certificate-generator-b3462",
+            storageBucket: "certificate-generator-b3462.firebasestorage.app",
+            messagingSenderId: "1051096816147",
+            appId: "1:1051096816147:web:43acdb00f6f25902c9fde6",
+            measurementId: "G-H9LS8TNJ6J"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Profile Section Elements
+        const profilePic = document.getElementById('profile-pic');
+        const profileName = document.getElementById('profile-name');
+        const profileEmail = document.getElementById('profile-email');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        // Authentication State Listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in
+                profilePic.src = user.photoURL || 'https://via.placeholder.com/50?text=User';
+                profileName.textContent = user.displayName || 'User';
+                profileEmail.textContent = user.email;
+            } else {
+                // No user is signed in, redirect to login page
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Logout functionality
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                // Sign-out successful.
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                // An error happened.
+                console.error('Logout error:', error);
+            });
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="profile-section" id="profile-section"> 
+        <img id="profile-pic" class="profile-pic" src="" alt="Profile Picture">
+        <div class="profile-info">
+            <div id="profile-name" class="profile-name"></div>
+            <div id="profile-email" class="profile-email"></div>
+            <button id="logout-btn" class="logout-btn">Logout</button>
+        </div>
+    </div>
+    <div class="container">
+        <h1>Certificate Generator</h1>
+        <div class="progress-bar">
+            <div class="progress-step active"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+            <div class="progress-step"></div>
+        </div>
+        <div class="step-labels">
+            <span>Upload</span>
+            <span>Details</span>
+            <span>Design</span>
+            <span>Generate</span>
+        </div>
+        <div class="step active" id="step1">
+            <h2>Step 1: Upload Certificate Template</h2>
+            <input type="file" id="templateUpload" accept="image/*">
+            <div id="selection-form">
+                <label>
+                  <input type="radio" name="genOption" value="single" onclick="showSingleForm()"> Single
+                </label>
+                <label>
+                  <input type="radio" name="genOption" value="bulk" onclick="showBulkForm()"> Bulk
+                </label>
+            </div>
+            <button onclick="nextStep()" id="nextStepBtn" disabled> Next </button>
+        </div>
+        <div id="single-form">
+            <div class="step" id="step2">
+                <h2>Step 2: Enter Name</h2>
+                <input type="text" id="userInput">
+                <button onclick="nextStep()"> Next </button>
+            </div>
+
+            <div class="step" id="step3">
+                <h2>Step 3: Design Certificate</h2>
+                <div class="controls">
+                    <label for="colorPicker">Color:</label>
+                    <input type="color" id="colorPicker" value="#000000" onchange="updatePreview('color')">
+                    <label for="fontSelect">Font:</label>
+                    <select id="fontSelect" onchange="updatePreview('font')">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+                    <label for="fontSize">Font Size:</label>
+                    <input type="number" id="fontSize" value="24" min="8" max="72" onchange="updatePreview('font-size')">
+                    <button onclick="addTextBox(1)" class="addTextBox">Add Text Box</button>
+                </div>
+                <div class="canvas-container">
+                    <img id="certificateCanvas">
+                    <div class="horizontal-guide" style="position: absolute; top: 50%; left: 0; right: 0; height: 2px; background-color: rgba(0,0,0,0.2);"></div>
+                    <div class="vertical-guide" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: rgba(0,0,0,0.2);"></div>
+                </div>
+                <button onclick="generateCertificates(1)">Generate & Download Certificates</button>
+            </div>
+
+            <div class="step" id="step4">
+                <h2>Thanks For Using Our Certificate Generator</h2>
+            </div>
+
+            <div class="loading" id="Sloading">
+                Generating certificates... Please wait...
+            </div>
+        </div>
+        <div id="bulk-form">
+            <div class="step" id="Bstep2">
+                <h2>Step 2: Upload Excel File</h2>
+                <input type="file" id="dataUpload" accept=".xlsx,.csv">
+                <h2>Select Column</h2>
+                <select id="columnSelect"></select>
+                <button onclick="nextStep()"> Next </button>
+            </div>
+
+            <div class="step" id="Bstep3">
+                <h2>Step 3: Design Certificate</h2>
+                <div class="controls">
+                    <label for="colorPicker">Color:</label>
+                    <input type="color" id="colorPicker" value="#000000" onchange="updatePreview('color')">
+                    <label for="fontSelect">Font:</label>
+                    <select id="fontSelect" onchange="updatePreview('font')">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+                    <label for="fontSize">Font Size:</label>
+                    <input type="number" id="fontSize" value="24" min="8" max="72" onchange="updatePreview('font-size')">
+                    <button onclick="addTextBox(0)" class="addTextBox">Add Text Box</button>
+                </div>
+                <div class="canvas-container">
+                    <img id="certificateCanvas">
+                    <div class="horizontal-guide" style="position: absolute; top: 50%; left: 0; right: 0; height: 2px; background-color: rgba(0,0,0,0.2);"></div>
+                    <div class="vertical-guide" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: rgba(0,0,0,0.2);"></div>
+                </div>
+                <button onclick="generateCertificates(0)">Generate & Download Certificates</button>
+            </div>
+
+            <div class="step" id="Bstep4">
+                <h2>Thanks For Using Our Certificate Generator</h2>
+            </div>
+
+            <div class="loading" id="loading">
+                Generating certificates... Please wait...
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
