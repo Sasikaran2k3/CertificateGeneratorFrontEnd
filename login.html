@@ -158,8 +158,6 @@
           } catch (error) {
             console.error("Error saving user to database:", error);
           }
-          // Sleep for 5 seconds before continuing
-          await new Promise(resolve => setTimeout(resolve, 15000));
         }
 
         loginEmailBtn.addEventListener("click", async () => {
