@@ -13,13 +13,13 @@ let isSingleMode = false;
 
 function nextStep() {
     if (isSingleMode) {
-        console.log(`step${currentStep}`);
         document.getElementById(`step${currentStep}`).classList.remove('active');
         currentStep++;
         if (currentStep === 4) {
             window.scrollTo(0, 0);
         }
         document.getElementById(`step${currentStep}`).classList.add('active');
+        console.log(`step${currentStep}`);
     } else {
         if (currentStep == 1)
             document.getElementById(`step${currentStep}`).classList.remove('active');
@@ -116,6 +116,7 @@ function addTextBox(flag) {
 
     const textBox = document.createElement('div');
     textBox.className = 'text-box';
+    currentTextBox = textBox;
 
     // Select column based on flag
     selectedColumn = flag === 0 ?
@@ -135,7 +136,7 @@ function addTextBox(flag) {
     // Center the text content and set font size dynamically
     textBox.style.textAlign = 'center';
     textBox.style.lineHeight = '50px'; // Assuming the height is 50px as set below
-    textBox.style.fontSize = flag === 0 ? document.getElementById('bulk-form').querySelector('#fontSize').value + 'px' : document.querySelector('#fontSize').value + 'px'; // Dynamically set font size
+    textBox.style.fontSize = flag === 0 ? document.getElementById('BfontSize').value + 'px' : document.querySelector('#fontSize').value + 'px'; // Dynamically set font size
 
     const containerRect = container.getBoundingClientRect();
     textBox.style.left = `${(containerRect.width - 200) / 2}px`;
@@ -169,17 +170,16 @@ function addTextBox(flag) {
 }
 
 function updatePreview(type) {
-    console.log("Changes");
     if (currentTextBox) {
         switch (type) {
             case 'color':
-                currentTextBox.style.color = document.getElementById('colorPicker').value;
+                currentTextBox.style.color = document.getElementById(isSingleMode?'colorPicker':'BcolorPicker').value;
                 break;
             case 'font':
-                currentTextBox.style.fontFamily = document.getElementById('fontSelect').value;
+                currentTextBox.style.fontFamily = document.getElementById(isSingleMode?'fontSelect':'BfontSelect').value;
                 break;
             case 'font-size':
-                currentTextBox.style.fontSize = document.getElementById('fontSize').value + 'px';
+                currentTextBox.style.fontSize = document.getElementById(isSingleMode?'fontSize':'BfontSize').value + 'px';
                 break;
         }
     }
@@ -189,7 +189,7 @@ function startDragging(e) {
     if (e.target.classList.contains('resize-handle')) return;
 
     isDragging = true;
-    currentTextBox = e.target.closest('.text-box');
+    // currentTextBox = e.target.closest('.text-box');
     startX = e.clientX;
     startY = e.clientY;
     originalX = currentTextBox.offsetLeft;
@@ -202,7 +202,7 @@ function startDragging(e) {
 function startResizing(e) {
     e.stopPropagation();
     isResizing = true;
-    currentTextBox = e.target.closest('.text-box');
+    // currentTextBox = e.target.closest('.text-box');
     currentHandle = e.target.dataset.handle;
     startX = e.clientX;
     startY = e.clientY;
@@ -270,11 +270,18 @@ function drag(e) {
     // Check if text box center is near vertical guide (within 10px)
     if (Math.abs(textBoxCenterX - verticalGuide) < 10) {
         newX = verticalGuide - (currentTextBox.offsetWidth / 2);
+        container.querySelector('.vertical-guide').style.opacity = '1';
+    } else {
+        container.querySelector('.vertical-guide').style.opacity = '0';
     }
+    
 
     // Check if text box center is near horizontal guide (within 10px)
     if (Math.abs(textBoxCenterY - horizontalGuide) < 10) {
         newY = horizontalGuide - (currentTextBox.offsetHeight / 2);
+        container.querySelector('.horizontal-guide').style.opacity = '1';
+    } else {
+        container.querySelector('.horizontal-guide').style.opacity = '0';
     }
 
     currentTextBox.style.left = `${newX}px`;
@@ -282,9 +289,13 @@ function drag(e) {
 }
 
 function stopDragging() {
+    const container = currentTextBox.parentElement;
     isDragging = false;
     document.removeEventListener('mousemove', drag);
     document.removeEventListener('mouseup', stopDragging);
+    container.querySelector('.vertical-guide').style.opacity = '0';
+    container.querySelector('.horizontal-guide').style.opacity = '0';
+
 }
 
 // New function for text alignment
@@ -330,6 +341,7 @@ async function generateCertificates(flag) {
 
     try {
         if (flag === 1) { // Single Certificate
+document.getElementsByClassName("count")[0].setAttribute('data-value', '1');
             // Update text content for single entry
             textBoxes.forEach(box => {
                 box.textContent = document.getElementById("userInput").value;
@@ -356,15 +368,15 @@ async function generateCertificates(flag) {
 
         } else { // Bulk Generation
             prepareTextBoxesForGeneration();
-
+            document.getElementsByClassName("Bcount")[0].setAttribute('data-value', data.length.toString());
             // Process each row of data
             for (let i = 0; i < data.length; i++) {
                 // Update text content for each text box with current row's data
                 textBoxes.forEach(box => {
                     box.textContent = data[i][selectedColumn];
-                    box.style.color = document.getElementById('colorPicker').value;
-                    box.style.fontFamily = document.getElementById('fontSelect').value;
-                    box.style.fontSize = document.getElementById('fontSize').value + 'px';
+                    box.style.color = document.getElementById('BcolorPicker').value;
+                    box.style.fontFamily = document.getElementById('BfontSelect').value;
+                    box.style.fontSize = document.getElementById('BfontSize').value + 'px';
                 });
 
                 await new Promise(resolve => setTimeout(resolve, 100));
