@@ -12,50 +12,96 @@
             onAuthStateChanged,
             signOut
         } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import {
+            getFirestore,
+            doc,
+            updateDoc,
+            increment
+        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
+        let profilePic = null;
+        let profileName = null;
+        let profileEmail = null;
+        let logoutBtn = null;
+        let db = null;
+        let uid = null;
         // Your web app's Firebase configuration
         fetch('https://certificategeneratorserver.onrender.com/firebase-config')
-      .then(response => response.json())
-      .then(data => {
-        // Decrypt the base64 encoded config
-        const firebaseConfig = JSON.parse(atob(data.data));
-        // Initialize Firebase with the decrypted config
+            .then(response => response.json())
+            .then(data => {
+                // Decrypt the base64 encoded config
+                const firebaseConfig = JSON.parse(atob(data.data));
+                // Initialize Firebase with the decrypted config
 
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+                // Initialize Firebase
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                db = getFirestore(app);
 
-        // Profile Section Elements
-        const profilePic = document.getElementById('profile-pic');
-        const profileName = document.getElementById('profile-name');
-        const profileEmail = document.getElementById('profile-email');
-        const logoutBtn = document.getElementById('logout-btn');
+                // Profile Section Elements
+                profilePic = document.getElementById('profile-pic');
+                profileName = document.getElementById('profile-name');
+                profileEmail = document.getElementById('profile-email');
+                logoutBtn = document.getElementById('logout-btn');
 
-        // Authentication State Listener
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // User is signed in
-                profilePic.src = user.photoURL || 'https://via.placeholder.com/50?text=User';
-                profileName.textContent = user.displayName || 'User';
-                profileEmail.textContent = user.email;
-            } else {
-                // No user is signed in, redirect to login page
-                window.location.href = 'https://certificategeneratorfrontend.onrender.com/login.html';
-            }
-        });
+                // Authentication State Listener
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        uid = user.uid;
+                        // User is signed in
+                        profilePic.src = user.photoURL || 'https://via.placeholder.com/50?text=User';
+                        profileName.textContent = user.displayName || 'User';
+                        profileEmail.textContent = user.email;
+                    } else {
+                        // No user is signed in, redirect to login page
+                        window.location.href = 'https://certificategeneratorfrontend.onrender.com/login.html';
+                    }
+                });
 
-        // Logout functionality
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).then(() => {
-                // Sign-out successful.
-                window.location.href = 'https://certificategeneratorfrontend.onrender.com/login.html';
-            }).catch((error) => {
-                // An error happened.
-                console.error('Logout error:', error);
+                // Logout functionality
+                logoutBtn.addEventListener('click', () => {
+                    signOut(auth).then(() => {
+                        // Sign-out successful.
+                        window.location.href = 'https://certificategeneratorfrontend.onrender.com/login.html';
+                    }).catch((error) => {
+                        // An error happened.
+                        console.error('Logout error:', error);
+                    });
+                });
+            })
+        // Add event listeners for count input boxes
+        document.addEventListener('DOMContentLoaded', () => {
+            const countElements = document.querySelectorAll('.count, .Bcount');
+            countElements.forEach(element => {
+                // Create MutationObserver to watch for data-value attribute changes
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach(async (mutation) => {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'data-value') {
+                            console.log('Count value changed:', element.getAttribute('data-value'));
+                            profileEmail = document.getElementById('profile-email');
+                            if (uid) {
+                                try {
+                                    const userDoc = doc(db, 'users', uid); // Reference to user's document
+                                    await updateDoc(userDoc, {
+                                        certificates: increment(Number(element.getAttribute('data-value'))) // Use the increment function
+                                    });
+                                    console.log(`Certificates updated for ${profileEmail}`);
+                                } catch (error) {
+                                    console.error('Error updating certificates:', error);
+                                }
+                            }
+                        }
+                    });
+                });
+
+                // Configure and start observing
+                observer.observe(element, {
+                    attributes: true,
+                    attributeFilter: ['data-value']
+                });
             });
         });
-      })
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -65,7 +111,7 @@
 </head>
 
 <body>
-    <div class="profile-section" id="profile-section"> 
+    <div class="profile-section" id="profile-section">
         <img id="profile-pic" class="profile-pic" src="" alt="Profile Picture">
         <div class="profile-info">
             <div id="profile-name" class="profile-name"></div>
@@ -92,10 +138,10 @@
             <input type="file" id="templateUpload" accept="image/*">
             <div id="selection-form">
                 <label>
-                  <input type="radio" name="genOption" value="single" onclick="showSingleForm()"> Single
+                    <input type="radio" name="genOption" value="single" onclick="showSingleForm()"> Single
                 </label>
                 <label>
-                  <input type="radio" name="genOption" value="bulk" onclick="showBulkForm()"> Bulk
+                    <input type="radio" name="genOption" value="bulk" onclick="showBulkForm()"> Bulk
                 </label>
             </div>
             <button onclick="nextStep()" id="nextStepBtn" disabled> Next </button>
@@ -113,25 +159,45 @@
                     <label for="colorPicker">Color:</label>
                     <input type="color" id="colorPicker" value="#000000" onchange="updatePreview('color')">
                     <label for="fontSelect">Font:</label>
+                    <link
+                        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap"
+                        rel="stylesheet">
+
                     <select id="fontSelect" onchange="updatePreview('font')">
-                    <option value="Arial">Arial</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Courier New">Courier New</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Verdana">Verdana</option>
-                </select>
+                        <option value="Arial" style="font-family: Arial;">Arial</option>
+                        <option value="'Times New Roman', Times" style="font-family: 'Times New Roman', Times;">Times
+                            New Roman</option>
+                        <option value="'Courier New', Courier" style="font-family: 'Courier New', Courier;">Courier New
+                        </option>
+                        <option value="Georgia" style="font-family: Georgia;">Georgia</option>
+                        <option value="Verdana" style="font-family: Verdana;">Verdana</option>
+                        <option value="'Roboto', sans-serif" style="font-family: 'Roboto', sans-serif;">Roboto</option>
+                        <option value="'Open Sans', sans-serif" style="font-family: 'Open Sans', sans-serif;">Open Sans
+                        </option>
+                        <option value="'Lato', sans-serif" style="font-family: 'Lato', sans-serif;">Lato</option>
+                        <option value="'Montserrat', sans-serif" style="font-family: 'Montserrat', sans-serif;">
+                            Montserrat</option>
+                        <option value="'Poppins', sans-serif" style="font-family: 'Poppins', sans-serif;">Poppins
+                        </option>
+                    </select>
+
                     <label for="fontSize">Font Size:</label>
-                    <input type="number" id="fontSize" value="24" min="8" max="72" onchange="updatePreview('font-size')">
+                    <input type="number" id="fontSize" value="24" min="8" max="72"
+                        onchange="updatePreview('font-size')">
                     <button onclick="addTextBox(1)" class="addTextBox">Add Text Box</button>
                 </div>
                 <div class="canvas-container">
                     <img id="certificateCanvas">
-                    <div class="horizontal-guide" style="position: absolute; top: 50%; left: 0; right: 0; height: 2px; background-color: rgba(0,0,0,0.2);"></div>
-                    <div class="vertical-guide" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: rgba(0,0,0,0.2);"></div>
+                    <div class="horizontal-guide"
+                        style="position: absolute; top: 50%; left: 0; right: 0; height: 2px; background-color: rgba(0,0,0,0.5); opacity: 0;">
+                    </div>
+                    <div class="vertical-guide"
+                        style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: rgba(0,0,0,0.5);opacity: 0;">
+                    </div>
                 </div>
                 <button onclick="generateCertificates(1)">Generate & Download Certificates</button>
+                <div data-value="-1" class="count" style="display: none;"> </div>
             </div>
-
             <div class="step" id="step4">
                 <h2>Thanks For Using Our Certificate Generator</h2>
             </div>
@@ -153,27 +219,48 @@
                 <h2>Step 3: Design Certificate</h2>
                 <div class="controls">
                     <label for="colorPicker">Color:</label>
-                    <input type="color" id="colorPicker" value="#000000" onchange="updatePreview('color')">
+                    <input type="color" id="BcolorPicker" value="#000000" onchange="updatePreview('color')">
                     <label for="fontSelect">Font:</label>
-                    <select id="fontSelect" onchange="updatePreview('font')">
-                    <option value="Arial">Arial</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Courier New">Courier New</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Verdana">Verdana</option>
-                </select>
-                    <label for="fontSize">Font Size:</label>
-                    <input type="number" id="fontSize" value="24" min="8" max="72" onchange="updatePreview('font-size')">
+                    <link
+                        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap"
+                        rel="stylesheet">
+
+                    <select id="BfontSelect" onchange="updatePreview('font')">
+                        <option value="Arial" style="font-family: Arial;">Arial</option>
+                        <option value="'Times New Roman', Times" style="font-family: 'Times New Roman', Times;">Times
+                            New Roman</option>
+                        <option value="'Courier New', Courier" style="font-family: 'Courier New', Courier;">Courier New
+                        </option>
+                        <option value="Georgia" style="font-family: Georgia;">Georgia</option>
+                        <option value="Verdana" style="font-family: Verdana;">Verdana</option>
+                        <option value="'Roboto', sans-serif" style="font-family: 'Roboto', sans-serif;">Roboto</option>
+                        <option value="'Open Sans', sans-serif" style="font-family: 'Open Sans', sans-serif;">Open Sans
+                        </option>
+                        <option value="'Lato', sans-serif" style="font-family: 'Lato', sans-serif;">Lato</option>
+                        <option value="'Montserrat', sans-serif" style="font-family: 'Montserrat', sans-serif;">
+                            Montserrat</option>
+                        <option value="'Poppins', sans-serif" style="font-family: 'Poppins', sans-serif;">Poppins
+                        </option>
+                    </select>
+
+                    <label for="BfontSize">Font Size:</label>
+                    <input type="number" id="BfontSize" value="24" min="8" max="72"
+                        onchange="updatePreview('font-size')">
                     <button onclick="addTextBox(0)" class="addTextBox">Add Text Box</button>
                 </div>
                 <div class="canvas-container">
                     <img id="certificateCanvas">
-                    <div class="horizontal-guide" style="position: absolute; top: 50%; left: 0; right: 0; height: 2px; background-color: rgba(0,0,0,0.2);"></div>
-                    <div class="vertical-guide" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: rgba(0,0,0,0.2);"></div>
+                    <div class="horizontal-guide"
+                        style="position: absolute; top: 50%; left: 0; right: 0; height: 2px; background-color: rgba(0,0,0,0.5); opacity: 0;">
+                    </div>
+                    <div class="vertical-guide"
+                        style="position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: rgba(0,0,0,0.5);opacity: 0;">
+                    </div>
                 </div>
                 <button onclick="generateCertificates(0)">Generate & Download Certificates</button>
+                <div data-value="-1" class="Bcount" style="display: none;">
+                </div>
             </div>
-
             <div class="step" id="Bstep4">
                 <h2>Thanks For Using Our Certificate Generator</h2>
             </div>
