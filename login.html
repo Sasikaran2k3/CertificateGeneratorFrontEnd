@@ -187,7 +187,11 @@
           try {
             const result = await signInWithPopup(auth, provider);
             errorMessageEl.textContent = "Google Login Successful!";
-            await saveUserToDatabase(result.user);
+            const userRef = doc(db, "users", result.user.uid);
+            const docSnap = await getDoc(userRef);
+            if (!docSnap.exists()) {
+              await saveUserToDatabase(result.user);
+            }
             console.log("Google user:", result.user);
           } catch (error) {
             errorMessageEl.textContent = error.message;
