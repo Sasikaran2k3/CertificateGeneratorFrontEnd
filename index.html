@@ -55,7 +55,7 @@
                         profileEmail.textContent = user.email;
                     } else {
                         // No user is signed in, redirect to login page
-                        window.location.href = 'https://certificategeneratorfrontend.onrender.com/login.html';
+                        window.location.href = 'https://certificate-generator-3uc9.onrender.com/login.html';
                     }
                 });
 
@@ -63,7 +63,7 @@
                 logoutBtn.addEventListener('click', () => {
                     signOut(auth).then(() => {
                         // Sign-out successful.
-                        window.location.href = 'https://certificategeneratorfrontend.onrender.com/login.html';
+                        window.location.href = 'https://certificate-generator-3uc9.onrender.com/login.html';
                     }).catch((error) => {
                         // An error happened.
                         console.error('Logout error:', error);
