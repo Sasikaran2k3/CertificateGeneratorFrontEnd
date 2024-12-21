@@ -76,11 +76,11 @@
           });
       });
       // Your web app's Firebase configuration
-    //   fetch("https://certificategeneratorserver.onrender.com/firebase-config")
-    //     .then((response) => response.json())
-    //     .then((data) => {
-    //       // Decrypt the base64 encoded config
-    //     });
+      //   fetch("https://certificategeneratorserver.onrender.com/firebase-config")
+      //     .then((response) => response.json())
+      //     .then((data) => {
+      //       // Decrypt the base64 encoded config
+      //     });
       // Add event listeners for count input boxes
       document.addEventListener("DOMContentLoaded", () => {
         const countElements = document.querySelectorAll(".count, .Bcount");
@@ -159,25 +159,43 @@
         <h2>Step 1: Upload Certificate Template</h2>
         <input type="file" id="templateUpload" accept="image/*" />
         <div id="selection-form">
-          <label>
-            <input
-              type="radio"
-              name="genOption"
-              value="single"
-              onclick="showSingleForm()"
-            />
-            Single
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="genOption"
-              value="bulk"
-              onclick="showBulkForm()"
-            />
-            Bulk
-          </label>
+          <p class="instructions">Please select an option to proceed:</p>
+          <div class="radio-options">
+            <label class="card" id="single-card">
+              <input
+                type="radio"
+                name="genOption"
+                value="single"
+                onclick="showSingleForm()"
+                class="radio-input"
+              />
+              <div class="card-content">
+                <h3>Single</h3>
+                <p>
+                  Choose this option if you want to generate a single
+                  certificate.
+                </p>
+              </div>
+            </label>
+            <label class="card" id="bulk-card">
+              <input
+                type="radio"
+                name="genOption"
+                value="bulk"
+                onclick="showBulkForm()"
+                class="radio-input"
+              />
+              <div class="card-content">
+                <h3>Bulk</h3>
+                <p>
+                  Choose this option if you want to generate multiple
+                  certificates at once using .xlsx or .csv files.
+                </p>
+              </div>
+            </label>
+          </div>
         </div>
+
         <button onclick="nextStep()" id="nextStepBtn" disabled>Next</button>
       </div>
       <div id="single-form">
